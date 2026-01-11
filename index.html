@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Private Notes Vault</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main>
+    <h1>Private Notes Vault</h1>
+    <p>A simple private notes app powered by Supabase.</p>
+
+    <form id="authForm">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" required>
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required>
+
+      <button id="loginBtn" type="submit">Login / Sign Up</button>
+    </form>
+
+    <button id="googleLoginBtn" type="button">Continue with Google</button>
+  </main>
+
+  <script type="module" src="js/auth.js"></script>
+</body>
+</html>

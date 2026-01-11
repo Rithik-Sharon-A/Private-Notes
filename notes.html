@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Notes</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main>
+    <h1>My Notes</h1>
+    <p id="userInfo"></p>
+
+    <form id="noteForm">
+      <label for="title">Title</label>
+      <input id="title" name="title" type="text">
+
+      <label for="content">Content</label>
+      <textarea id="content" name="content"></textarea>
+
+      <button id="saveBtn" type="submit">Save</button>
+    </form>
+
+    <section aria-labelledby="notes-heading">
+      <h2 id="notes-heading">Your Notes</h2>
+      <div id="notesList"></div>
+    </section>
+
+    <button id="logoutBtn" type="button">Logout</button>
+  </main>
+
+  <script type="module" src="js/notes.js"></script>
+</body>
+</html>
