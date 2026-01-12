@@ -2,7 +2,9 @@ import { supabase } from './supabase.js';
 
 let editingNoteId = null;
 let autosaveTimer = null;
+let currentUser = null;
 
+// Auto-save handler
 function scheduleAutosave() {
   if (!editingNoteId) return;
 
@@ -24,6 +26,79 @@ function scheduleAutosave() {
   }, 700);
 }
 
+// Enter edit mode
+function startEditingNote(note) {
+  if (!note.id) return;
+
+  const titleInput = document.getElementById('title');
+  const contentInput = document.getElementById('content');
+  const saveBtn = document.getElementById('saveBtn');
+
+  editingNoteId = note.id;
+
+  if (titleInput) {
+    titleInput.value = note.title || '';
+  }
+  if (contentInput) {
+    contentInput.value = note.content || '';
+  }
+  if (saveBtn) {
+    saveBtn.textContent = 'Update';
+  }
+  if (titleInput) {
+    titleInput.focus();
+  }
+}
+
+// Exit edit mode
+function exitEditMode() {
+  editingNoteId = null;
+  const saveBtn = document.getElementById('saveBtn');
+  if (saveBtn) {
+    saveBtn.textContent = 'Save';
+  }
+}
+
+// Create note item element
+function createNoteElement(note) {
+  const item = document.createElement('article');
+
+  const title = document.createElement('h3');
+  title.textContent = note.title || 'Untitled';
+
+  const content = document.createElement('p');
+  content.textContent = note.content || '';
+
+  const timestamp = document.createElement('small');
+  const createdAt = note.created_at
+    ? new Date(note.created_at).toLocaleString()
+    : '';
+  timestamp.textContent = createdAt;
+
+  const buttonContainer = document.createElement('div');
+
+  const editButton = document.createElement('button');
+  editButton.type = 'button';
+  editButton.textContent = 'Edit';
+  editButton.addEventListener('click', () => startEditingNote(note));
+
+  const deleteButton = document.createElement('button');
+  deleteButton.type = 'button';
+  deleteButton.textContent = 'Delete';
+  deleteButton.addEventListener('click', () => deleteNote(note.id));
+
+  buttonContainer.appendChild(editButton);
+  buttonContainer.appendChild(deleteButton);
+
+  item.appendChild(title);
+  item.appendChild(content);
+  item.appendChild(timestamp);
+  item.appendChild(buttonContainer);
+
+  return item;
+}
+
+// Load and render notes
 async function loadNotes() {
   const notesList = document.getElementById('notesList');
   if (!notesList) return;
@@ -47,66 +122,12 @@ async function loadNotes() {
   }
 
   data.forEach((note) => {
-    const item = document.createElement('article');
-
-    const title = document.createElement('h3');
-    title.textContent = note.title || 'Untitled';
-
-    const content = document.createElement('p');
-    content.textContent = note.content || '';
-
-    const timestamp = document.createElement('small');
-    const createdAt = note.created_at
-      ? new Date(note.created_at).toLocaleString()
-      : '';
-    timestamp.textContent = createdAt;
-
-    const buttonContainer = document.createElement('div');
-
-    const editButton = document.createElement('button');
-    editButton.type = 'button';
-    editButton.textContent = 'Edit';
-    editButton.addEventListener('click', () => {
-      if (!note.id) return;
-      const titleInput = document.getElementById('title');
-      const contentInput = document.getElementById('content');
-      const saveBtn = document.getElementById('saveBtn');
-      
-      editingNoteId = note.id;
-      if (titleInput) {
-        titleInput.value = note.title || '';
-      }
-      if (contentInput) {
-        contentInput.value = note.content || '';
-      }
-      if (saveBtn) {
-        saveBtn.textContent = 'Update';
-      }
-      if (titleInput) {
-        titleInput.focus();
-      }
-    });
-
-    const deleteButton = document.createElement('button');
-    deleteButton.type = 'button';
-    deleteButton.textContent = 'Delete';
-    deleteButton.addEventListener('click', () => {
-      if (!note.id) return;
-      deleteNote(note.id);
-    });
-
-    buttonContainer.appendChild(editButton);
-    buttonContainer.appendChild(deleteButton);
-
-    item.appendChild(title);
-    item.appendChild(content);
-    item.appendChild(timestamp);
-    item.appendChild(buttonContainer);
-
-    notesList.appendChild(item);
+    const noteElement = createNoteElement(note);
+    notesList.appendChild(noteElement);
   });
 }
 
+// Delete note
 async function deleteNote(noteId) {
   if (!noteId) return;
 
@@ -119,6 +140,7 @@ async function deleteNote(noteId) {
   loadNotes();
 }
 
+// Update note
 async function updateNote(noteId, title, content) {
   if (!noteId) return;
 
@@ -134,6 +156,7 @@ async function updateNote(noteId, title, content) {
   return true;
 }
 
+// Save note (create or update)
 async function saveNote(userId, form) {
   const formData = new FormData(form);
   const title = (formData.get('title') || '').toString().trim();
@@ -144,13 +167,9 @@ async function saveNote(userId, form) {
   if (editingNoteId) {
     const success = await updateNote(editingNoteId, title, content);
     if (success) {
-      editingNoteId = null;
+      exitEditMode();
       if (typeof form.reset === 'function') {
         form.reset();
-      }
-      const saveBtn = document.getElementById('saveBtn');
-      if (saveBtn) {
-        saveBtn.textContent = 'Save';
       }
       loadNotes();
     }
@@ -172,6 +191,7 @@ async function saveNote(userId, form) {
   loadNotes();
 }
 
+// Logout
 async function logout() {
   const { error } = await supabase.auth.signOut();
   if (error) {
@@ -181,61 +201,72 @@ async function logout() {
   window.location.href = 'index.html';
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// Display user info
+function displayUserInfo(user) {
+  const userInfo = document.getElementById('userInfo');
+  if (userInfo) {
+    userInfo.textContent = `User ID: ${user.id}\nEmail: ${user.email || 'N/A'}`;
+  }
+}
+
+// Clean OAuth hash from URL
+function cleanOAuthHash() {
+  if (window.location.hash) {
+    window.history.replaceState(null, '', window.location.pathname);
+  }
+}
+
+// Setup event listeners
+function setupEventListeners() {
   const noteForm = document.getElementById('noteForm');
   const logoutBtn = document.getElementById('logoutBtn');
-  const saveBtn = document.getElementById('saveBtn');
   const titleInput = document.getElementById('title');
   const contentInput = document.getElementById('content');
-  let currentUser = null;
-  let initialized = false;
 
-  function initializeUI(user) {
-    if (initialized) return;
-    initialized = true;
-    currentUser = user;
-
-    if (window.location.hash) {
-      window.history.replaceState(null, '', window.location.pathname);
-    }
-
-    const userInfo = document.getElementById('userInfo');
-    if (userInfo) {
-      userInfo.textContent = `User ID: ${user.id}\nEmail: ${user.email || 'N/A'}`;
-    }
-
-    loadNotes();
-
-    if (titleInput) {
-      titleInput.addEventListener('input', scheduleAutosave);
-    }
-    if (contentInput) {
-      contentInput.addEventListener('input', scheduleAutosave);
-    }
-
-    if (noteForm) {
-      noteForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        if (currentUser) {
-          await saveNote(currentUser.id, noteForm);
-        }
-      });
-    }
-
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', logout);
-    }
-
+  if (titleInput) {
+    titleInput.addEventListener('input', scheduleAutosave);
+  }
+  if (contentInput) {
+    contentInput.addEventListener('input', scheduleAutosave);
   }
 
+  if (noteForm) {
+    noteForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (currentUser) {
+        await saveNote(currentUser.id, noteForm);
+      }
+    });
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', logout);
+  }
+}
+
+// Initialize UI
+function initializeUI(user) {
+  currentUser = user;
+  cleanOAuthHash();
+  displayUserInfo(user);
+  loadNotes();
+  setupEventListeners();
+}
+
+// Main initialization
+document.addEventListener('DOMContentLoaded', () => {
+  let initialized = false;
+
   supabase.auth.onAuthStateChange((event, session) => {
-    // Handle both initial page load and OAuth redirects
     if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
       if (!session || !session.user) {
         window.location.href = 'index.html';
         return;
       }
-      initializeUI(session.user);
+      if (!initialized) {
+        initialized = true;
+        initializeUI(session.user);
+      }
     }
   });
 });
