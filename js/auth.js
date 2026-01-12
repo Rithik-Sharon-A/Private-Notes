@@ -1,29 +1,27 @@
 import { supabase } from './supabase.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+  const authForm = document.getElementById('authForm');
+  const googleLoginBtn = document.getElementById('googleLoginBtn');
+
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      window.location.replace('notes.html');
+    }
+  });
+
   const { data } = await supabase.auth.getSession();
   if (data?.session) {
     window.location.href = 'notes.html';
     return;
   }
 
-  const authForm = document.getElementById('authForm');
-  const googleLoginBtn = document.getElementById('googleLoginBtn');
-
-  // OAuth redirect handler - redirects to notes.html after successful sign in
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && session) {
-      window.location.href = 'notes.html';
-    }
-  });
-
   if (googleLoginBtn) {
     googleLoginBtn.addEventListener('click', async () => {
-      // Explicitly set redirectTo for production deployments
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/notes.html'
+          redirectTo: window.location.origin
         }
       });
       if (error) {
