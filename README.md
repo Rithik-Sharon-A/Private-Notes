@@ -1,61 +1,132 @@
-# Private Notes Vault
+Private Notes Vault
 
-A minimal, secure notes app built with **vanilla HTML/CSS/JS** + **Supabase Auth/DB**. Each user can create, view, edit, and delete *their own* notes, with **Row Level Security (RLS)** enforcing ownership.
+A secure, minimal notes application where each user can create and manage their own private notes.
+Built with vanilla HTML, CSS, and JavaScript using Supabase Authentication and Database.
 
-## Features
+This project demonstrates core full-stack concepts with a strong emphasis on authentication, data ownership, and clean user experience.
 
-- **Authentication**
-  - Email/password sign in (with sign up fallback)
-  - Google OAuth sign in
-- **Notes**
-  - Create notes (title + content)
-  - List notes (newest first)
-  - Edit notes
-  - Delete notes
-- **Security**
-  - RLS policies restrict access to the authenticated user’s rows
-- **UI**
-  - Calm, distraction-free styling
-  - Mobile-friendly layout (single breakpoint)
+Objective
 
-## Tech stack
+The goal of this project is to build a private, authenticated notes web app with a simple and intentional feature set.
 
-- **Frontend**: HTML, CSS, JavaScript (ES Modules)
-- **Backend**: Supabase (Auth + Postgres)
+The focus is on:
 
-## Project structure
+Secure authentication
 
-```
+Strict data ownership
+
+Clean, distraction-free UI
+
+Correct full-stack flow
+
+Advanced features are intentionally limited to maintain clarity and simplicity.
+
+Core Concept
+
+Notes are private by default and strictly tied to the authenticated user.
+
+There is:
+
+No sharing
+
+No public notes
+
+No tags or folders
+
+Only:
+
+Login
+
+Write
+
+Read
+
+Delete
+
+The application behaves like a personal scratchpad, not a productivity platform.
+
+Features
+Authentication
+
+Email & password authentication
+
+Google OAuth login
+
+Session handling with automatic redirects
+
+Unauthenticated users cannot access notes
+
+Notes Management
+
+Create notes (title + content)
+
+View a list of personal notes (newest first)
+
+View individual notes
+
+Delete notes
+
+Each note includes:
+
+Title
+
+Content
+
+Created timestamp
+
+Security
+
+Supabase Row Level Security (RLS) enabled
+
+Notes are accessible only by their owner
+
+Authorization enforced at the database level
+
+No client-side ownership filtering
+
+Safe use of Supabase anon key (client-approved)
+
+User Experience
+
+Minimal, distraction-free interface
+
+Calm visual design
+
+Smooth transitions
+
+Fully responsive and mobile-friendly
+
+Touch-optimized buttons for mobile devices
+
+Tech Stack
+
+Frontend: HTML, CSS, JavaScript (ES Modules)
+
+Backend: Supabase (Authentication + PostgreSQL)
+
+Hosting: Netlify
+
+Build Tools: None (runs directly in the browser)
+
+Project Structure
 private-notes-vault/
-  index.html
-  notes.html
-  css/style.css
-  js/
-    supabase.js
-    auth.js
-    notes.js
-```
+│
+├── index.html        # Login page
+├── notes.html        # Notes interface
+│
+├── css/
+│   └── style.css     # Minimal, responsive styling
+│
+├── js/
+│   ├── supabase.js   # Supabase client initialization
+│   ├── auth.js       # Authentication logic
+│   └── notes.js      # Notes CRUD operations
+│
+├── .gitignore
+└── README.md
 
-## Setup (Supabase)
-
-### 1) Create a Supabase project
-
-- Enable **Email** auth.
-- Enable **Google** auth (optional but supported).
-
-### 2) Configure your client keys
-
-Edit `js/supabase.js` and set:
-- `SUPABASE_URL`: your project URL (looks like `https://xxxxx.supabase.co`)
-- `SUPABASE_ANON_KEY`: your **anon/public** key (a long JWT starting with `eyJ...`)
-
-> The anon key is designed to be used in the browser. Do **not** use the `service_role` key on the client.
-
-### 3) Create the `notes` table
-
-Run this in **Supabase SQL Editor**:
-
-```sql
+Database Design
+Notes Table
 create table if not exists public.notes (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null,
@@ -64,83 +135,99 @@ create table if not exists public.notes (
   created_at timestamptz not null default now()
 );
 
-alter table public.notes enable row level security;
-```
+Row Level Security (RLS)
 
-### 4) Add RLS policies (ownership enforced)
+Ownership is enforced using Supabase RLS policies:
 
-```sql
-create policy "notes_select_own"
-on public.notes
-for select
-to authenticated
-using (auth.uid() = user_id);
+Users can only read their own notes
 
-create policy "notes_insert_own"
-on public.notes
-for insert
-to authenticated
-with check (auth.uid() = user_id);
+Users can only insert notes tied to their user ID
 
-create policy "notes_update_own"
-on public.notes
-for update
-to authenticated
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+Users can only update or delete their own notes
 
-create policy "notes_delete_own"
-on public.notes
-for delete
-to authenticated
-using (auth.uid() = user_id);
-```
+All authorization is handled at the database layer, not in JavaScript.
 
-> With RLS enabled, **do not** filter by `user_id` in JavaScript. The database policies enforce ownership.
+Architecture Overview
 
-### 5) Configure OAuth redirect URLs (Google)
+Frontend runs entirely in the browser using ES modules
 
-In Supabase: **Authentication → URL Configuration**
+Supabase provides:
 
-- Add your local/dev URL (example):
-  - `http://localhost:5500`
-  - `http://127.0.0.1:5500`
-- Add your production URL when deployed.
+Authentication
 
-## Run locally
+Database
 
-You must serve the folder with a local web server (ES modules don’t work via `file://`).
+Authorization via RLS
 
-### Option A: VS Code Live Server
+No custom backend server required
 
-- Open the `private-notes-vault/` folder
-- Start **Live Server**
-- Open `index.html`
+Security does not rely on client-side logic
 
-### Option B: Python (no Node required)
+This architecture minimizes complexity while maintaining strong security guarantees.
 
-```bash
+Running Locally
+
+A local server is required (ES modules do not work with file://).
+
+Option 1: VS Code Live Server
+
+Open the project folder
+
+Start Live Server
+
+Open index.html
+
+Option 2: Python
 cd private-notes-vault
 python -m http.server 5500
-```
 
-Then open:
 
-- `http://localhost:5500/index.html`
+Open:
 
-## Usage
+http://localhost:5500/index.html
 
-- **Login**: Email/password or Google OAuth
-- **Notes page**: Create notes, click **Edit** to update, or **Delete**
+Deployment
 
-## Troubleshooting
+Repository:
+https://github.com/Rithik-Sharon-A/Private-Notes
 
-- **Google OAuth returns but notes page redirects back**
-  - Ensure redirect URLs are configured in Supabase
-  - Ensure you are serving via `http://localhost:...` (not `file://`)
-- **Auth works but notes don’t load**
-  - Confirm RLS policies exist and table columns match
+Deployed using Netlify
 
-## License
+No build command
 
-Educational / internship evaluation project.
+Publish directory: .
+
+Supabase OAuth redirect URLs are configured for both local and production environments.
+
+Evaluation Criteria Alignment
+Area	Coverage
+Authentication & Data Security	Supabase Auth + RLS
+Notes Flow	Create, view, delete notes
+UI Simplicity	Minimal, focused design
+Code Quality	Modular, readable JavaScript
+Optional Enhancements Implemented
+
+Edit notes
+
+Auto-save while typing (debounced)
+
+Smooth UI transitions
+
+Mobile-first responsive layout
+
+These features were added without compromising simplicity.
+
+Security Notes
+
+Supabase anon key is safe for browser usage
+
+Service role key is never exposed
+
+No business logic depends on client-side user IDs
+
+All data access is protected by RLS
+
+License
+
+MIT-style usage for learning, demos, and internship evaluation.
+Not intended for commercial redistribution.
