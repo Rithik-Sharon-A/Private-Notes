@@ -4,18 +4,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const authForm = document.getElementById('authForm');
   const googleLoginBtn = document.getElementById('googleLoginBtn');
 
+  // Handle OAuth callback redirects
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && session) {
       window.location.replace('notes.html');
     }
   });
 
+  // Redirect if already logged in
   const { data } = await supabase.auth.getSession();
   if (data?.session) {
     window.location.href = 'notes.html';
     return;
   }
 
+  // Google OAuth login
   if (googleLoginBtn) {
     googleLoginBtn.addEventListener('click', async () => {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -30,55 +33,59 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Email/password login with sign-up fallback
   if (authForm) {
-  authForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
+    authForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
 
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
 
-    if (!emailInput || !passwordInput) return;
+      if (!emailInput || !passwordInput) return;
 
-    const email = (emailInput.value || '').trim();
-    const password = passwordInput.value || '';
+      const email = (emailInput.value || '').trim();
+      const password = passwordInput.value || '';
 
-    if (!email || !password) {
-      alert('Please enter email and password.');
-      return;
-    }
-
-    const { data: signInData, error } = await supabase.auth.signInWithPassword({ 
-      email, 
-      password 
-    });
-    
-    if (!error && signInData?.session) {
-      window.location.href = 'notes.html';
-      return;
-    }
-
-    if (error) {
-      alert(`Login failed: ${error.message}`);
-      
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ 
-        email, 
-        password 
-      });
-      
-      if (signUpError) {
-        alert(`Sign up failed: ${signUpError.message}`);
+      if (!email || !password) {
+        alert('Please enter email and password.');
         return;
       }
 
-      if (signUpData?.user && !signUpData?.session) {
-        alert('Account created! Check your email to confirm, then log in.');
-      } else if (signUpData?.session) {
-        alert('Account created and logged in!');
+      // Try login first
+      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (!loginError && loginData?.session) {
         window.location.href = 'notes.html';
-      } else {
-        alert('Account created. Please log in.');
+        return;
       }
-    }
-  });
+
+      // Login failed - try sign up
+      if (loginError) {
+        alert(`Login failed: ${loginError.message}`);
+
+        const { data: signupData, error: signupError } = await supabase.auth.signUp({
+          email,
+          password
+        });
+
+        if (signupError) {
+          alert(`Sign up failed: ${signupError.message}`);
+          return;
+        }
+
+        // Handle different sign-up outcomes
+        if (signupData?.user && !signupData?.session) {
+          alert('Account created! Check your email to confirm, then log in.');
+        } else if (signupData?.session) {
+          alert('Account created and logged in!');
+          window.location.href = 'notes.html';
+        } else {
+          alert('Account created. Please log in.');
+        }
+      }
+    });
   }
 });

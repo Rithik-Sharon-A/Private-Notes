@@ -2,6 +2,12 @@
 
 A minimal, secure notes app built with **vanilla HTML/CSS/JS** + **Supabase Auth/DB**. Each user can create, view, edit, and delete *their own* notes, with **Row Level Security (RLS)** enforcing ownership.
 
+## 🚀 Live Demo
+
+**[https://private-notes-vault1.netlify.app/](https://private-notes-vault1.netlify.app/)**
+
+Try it now! Sign in with email/password or Google OAuth.
+
 ## ✨ Features
 
 ### Authentication
