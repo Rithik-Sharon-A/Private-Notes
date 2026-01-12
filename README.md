@@ -16,6 +16,12 @@ Try it now! Sign in with email/password or Google OAuth.
 - Session management with automatic redirect handling
 - User profile display (User ID and email) on notes page
 
+### Email Verification & SMTP
+- Supabase Auth handles email/password authentication
+- Email verification is enabled for new user accounts
+- Custom SMTP is configured to improve email delivery reliability
+- Avoids free-tier rate limits and ensures consistent verification emails
+
 ### Notes Management
 - Create notes with title and content
 - View all notes (sorted by newest first)
