@@ -229,7 +229,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'INITIAL_SESSION') {
+    // Handle both initial page load and OAuth redirects
+    if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
       if (!session || !session.user) {
         window.location.href = 'index.html';
         return;

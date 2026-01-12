@@ -10,10 +10,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const authForm = document.getElementById('authForm');
   const googleLoginBtn = document.getElementById('googleLoginBtn');
 
+  // OAuth redirect handler - redirects to notes.html after successful sign in
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      window.location.href = 'notes.html';
+    }
+  });
+
   if (googleLoginBtn) {
     googleLoginBtn.addEventListener('click', async () => {
+      // Explicitly set redirectTo for production deployments
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google'
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/notes.html'
+        }
       });
       if (error) {
         alert(`Google login failed: ${error.message}`);
