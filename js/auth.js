@@ -35,6 +35,16 @@ async function attemptLogin(email, password) {
 // Handle login failure and signup fallback
 async function handleLoginFailure(loginError, email, password) {
   if (loginError.message.toLowerCase().includes('invalid login credentials')) {
+    const { data: signupData, error: signupError } = await supabase.auth.signUp({
+      email,
+      password
+    });
+
+    if (!signupError && signupData?.user) {
+      alert('Account created! Please verify your email before logging in.');
+      return;
+    }
+
     alert('Please verify your email before logging in.');
     return;
   }
